@@ -19,9 +19,15 @@ namespace SimplexMethodBMSTU
         decimal[,] matrix = null!; // массив с кэфами
         decimal[] F = null!;
         string Func = null!; // Определение функции (max/min)
+        string TypeLP = null!; // Определение ЛП(ДЗЛП/ПЛП)
         decimal[] F_new = null!;
         string[] basis_variables = null!;
         string[] free_variables = null!;
+        string[] basis_variables_dual = null!;
+        string[] free_variables_dual = null!;
+        decimal[,] matrix_dual_simplex = null!;
+        decimal[] cols_dual_simplex = null!;
+        decimal[] F_dual_simplex = null!;
         decimal[,] matrix_new = null!; // массив с кэфами после преобразования
         public SimplexMethod(int n, int m)
         {
@@ -39,9 +45,16 @@ namespace SimplexMethodBMSTU
             cols_new = new decimal[m];
             basis_variables = new string[m];
             free_variables = new string[n];
+            basis_variables_dual = new string[n+1];
+            free_variables_dual = new string[m];
+            matrix_dual_simplex = new decimal[n+1,m];
+            cols_dual_simplex = new decimal[n+1];
+            F_dual_simplex = new decimal[m];
         }
         public void Input()
         {
+            Console.Write("Выберите задачу ЛП(ДЗ/П): ");
+            TypeLP = Console.ReadLine();
             Console.Write("Выберите к чему стремится функция (max/min): ");
             Func = Console.ReadLine();
 
@@ -106,13 +119,27 @@ namespace SimplexMethodBMSTU
 
         void InputVariables()
         {
-            for(int i = 0; i<n; ++i)
+            if(TypeLP == "П")
             {
-                free_variables[i] = $"x{i+1}";
+                for(int i = 0; i<n; ++i)
+                {
+                    free_variables[i] = $"x{i+1}";
+                }
+                for(int i = 0; i<m; ++i)
+                {
+                    basis_variables[i] = $"x{n+i+1}";
+                }
             }
-            for(int i = 0; i<m; ++i)
+            else if(TypeLP == "ДЗ")
             {
-                basis_variables[i] = $"x{n+i+1}";
+                for(int i = 0; i<n; ++i)
+                {
+                    free_variables[i] = $"y{i+1}";
+                }
+                for(int i = 0; i<m; ++i)
+                {
+                    basis_variables[i] = $"y{n+i+1}";
+                }
             }
         }
 
@@ -153,6 +180,14 @@ namespace SimplexMethodBMSTU
             }
             Console.WriteLine();
             Console.WriteLine();
+        }
+
+        void MatrixTransposition()
+        {
+            for(int i = 0; i<n+1; ++i)
+            {
+                
+            }
         }
 
         // Поиск разщешающего столбца
