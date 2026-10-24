@@ -56,7 +56,7 @@ namespace SimplexMethodBMSTU
             F_dual_simplex = new decimal[m];
             matrix_dual_simplex_new = new decimal[n,m];
             F_dual_simplex_new = new decimal[m];
-            cols_dual_simplex_new = new decimal[n];
+            cols_dual_simplex_new = new decimal[n+1];
         }
         public void Input()
         {
@@ -79,23 +79,13 @@ namespace SimplexMethodBMSTU
                 }
             }
             Console.WriteLine("Введите строку F:");
-            if(Func == "min")
+            for (int i = 0; i < n + 1; i++)
             {
-                for (int i = 0; i < n + 1; i++)
-                {
-                    F[i] = decimal.Parse(Console.ReadLine()!);
-                }
-            }
-            else if(Func == "max")
-            {
-                for (int i = 0; i < n + 1; i++)
-                {
-                    F[i] = -decimal.Parse(Console.ReadLine()!);
-                }
+                F[i] = decimal.Parse(Console.ReadLine()!);
             }
         }
 
-        // Вывод получившейся симплекс таблицы
+        // Вывод получившейся симплекс таблицы итоговой
         public void PrintSimplexTab()
         {
             Console.WriteLine();
@@ -124,6 +114,36 @@ namespace SimplexMethodBMSTU
             Console.WriteLine($"\n\nF = {F[0]:F2}");
         }
 
+        // Вывод получившейся симплекс таблицы ДЗЛП итоговой
+        void PrintSimplexDualTabFinal()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Получившаяся симплекс таблица:\n");
+            Console.Write("\t" + "S_io" + "\t");
+            for(int i = 0; i<m; ++i)
+            {
+                Console.Write(free_variables_dual[i] + "\t");
+            }
+            Console.WriteLine();
+            for(int i = 0; i<n; ++i)
+            {
+                Console.Write(basis_variables_dual[i] + "\t");
+                Console.Write(cols_dual_simplex[i] + "\t");
+                for(int j = 0; j<m; ++j)
+                {
+                    Console.Write($"{matrix_dual_simplex[i,j]:F2}" + "\t");
+                }
+                Console.WriteLine();
+            }
+            Console.Write("F" + "\t" + $"{cols_dual_simplex[n]:F2}" + "\t");
+            for(int i = 0; i<m; ++i)
+            {
+                Console.Write($"{F_dual_simplex[i]:F2}" + "\t");
+            }
+            Console.WriteLine($"\n\nF = {cols_dual_simplex[n]:F2}\n");
+        }
+
+        // Функция для проверки задачи линейного программирования
         void InputVariables()
         {
             if(TypeLP == "П")
@@ -141,16 +161,17 @@ namespace SimplexMethodBMSTU
             {
                 for(int i = 0; i<n; ++i)
                 {
-                    free_variables[i] = $"y{i+1}";
+                    free_variables_dual[i] = $"y{i+1}";
                 }
                 for(int i = 0; i<m; ++i)
                 {
-                    basis_variables[i] = $"y{n+i+1}";
+                    basis_variables_dual[i] = $"y{n+i+1}";
                 }
             }
         }
 
-        void SwitchVariables(Func<int> find_row, Func<int> find_col)
+        // Функция для замены переменной базисной на свободную и наоборот(подписи)
+        void  SwitchVariables(Func<int> find_row, Func<int> find_col)
         {
             int result_row = find_row();
             int result_col = find_col();
@@ -158,11 +179,21 @@ namespace SimplexMethodBMSTU
             {
                 return;
             }
-            string temp_row = basis_variables[result_row];
-            basis_variables[result_row] = free_variables[result_col];
-            free_variables[result_col] = temp_row;
+            if(TypeLP == "П")
+            {
+                string temp_row = basis_variables[result_row];
+                basis_variables[result_row] = free_variables[result_col];
+                free_variables[result_col] = temp_row;                
+            }
+            else if(TypeLP == "ДЗ")
+            {
+                string temp_row_dual = basis_variables_dual[result_row];
+                basis_variables_dual[result_row] = free_variables_dual[result_col];
+                free_variables_dual[result_col] = temp_row_dual; 
+            }
         }
 
+        // Функция печати таблицы в итерациях
         void PrintSimplexTabWithVariables()
         {
             Console.Write("\t" + "S_io" + "\t");
@@ -189,6 +220,34 @@ namespace SimplexMethodBMSTU
             Console.WriteLine();
         }
 
+        // Функция печати симплекс таблицы ДЗЛП в итерациях
+        void PrintSimplexDualTab()
+        {
+            Console.Write("\t" + "S_io" + "\t");
+            for(int i = 0; i<m; ++i)
+            {
+                Console.Write(free_variables_dual[i] + "\t");
+            }
+            Console.WriteLine();
+            for(int i = 0; i<n; ++i)
+            {
+                Console.Write(basis_variables_dual[i] + "\t");
+                Console.Write(cols_dual_simplex[i] + "\t");
+                for(int j = 0; j<m; ++j)
+                {
+                    Console.Write($"{matrix_dual_simplex[i,j]:F2}" + "\t");
+                }
+                Console.WriteLine();
+            }
+            Console.Write("F" + "\t" + cols_dual_simplex[n] + "\t");
+            for(int i = 0; i < m; ++i)
+            {
+                Console.Write($"{F_dual_simplex[i]:F2}" + "\t");
+            }
+            Console.WriteLine();
+            Console.WriteLine();
+        }
+
         // Транспонирование матрицы
         void MatrixTransposition()
         {
@@ -208,12 +267,6 @@ namespace SimplexMethodBMSTU
                 }
             }
         }
-
-        // Вывод ДЗЛП
-        // void PrintDualSimplexMethod
-        // {
-        //     // ....
-        // }
 
         // Поиск разщешающего столбца
         int Find_col()
@@ -417,30 +470,14 @@ namespace SimplexMethodBMSTU
                         cols_dual_simplex_new[i] = cols_dual_simplex[i] - (matrix_dual_simplex[i,Find_col1]*cols_dual_simplex[Find_row1])/matrix_dual_simplex[Find_row1,Find_col1];
                     }
                 }
-                F_dual_simplex_new[Find_col1+1] = -F_dual_simplex[Find_col1+1]/matrix_dual_simplex[Find_row1,Find_col1];
-                F_dual_simplex_new[0] = F_dual_simplex[0] - ((F_dual_simplex[Find_col1+1]*cols_dual_simplex[Find_row1])/matrix_dual_simplex[Find_row1,Find_col1]);
-                if(Find_col1 == m)
+                F_dual_simplex_new[Find_col1] = -F_dual_simplex[Find_col1]/matrix_dual_simplex[Find_row1,Find_col1];
+                cols_dual_simplex_new[n] = cols_dual_simplex[n] - ((F_dual_simplex[Find_col1]*cols_dual_simplex[Find_row1])/matrix_dual_simplex[Find_row1,Find_col1]);
+                for(int i = 0; i<m; ++i)
                 {
-                    int variable = 0;
-                    for(int i = 1; i<m; ++i)
+                    if(i != Find_col1)
                     {
-                        if(i != Find_col1+1)
-                        {
-                            F_dual_simplex_new[i] = F_dual_simplex[i] - (F_dual_simplex[Find_col1+1]*matrix_dual_simplex[Find_row1,variable])/matrix_dual_simplex[Find_row1,Find_col1];
-                            ++variable;
-                        }
-                    }
-                }
-                else
-                {
-                    int variable = 1;
-                    for(int i = 1; i<m; ++i)
-                    {
-                        if(i != Find_col1+1)
-                        {
-                            F_dual_simplex_new[i] = F_dual_simplex[i] - (F_dual_simplex[Find_col1+1]*matrix_dual_simplex[Find_row1,variable])/matrix_dual_simplex[Find_row1,Find_col1];
-                            ++variable;
-                        }
+
+                        F_dual_simplex_new[i] = F_dual_simplex[i] - (F_dual_simplex[Find_col1]*matrix_dual_simplex[Find_row1,i])/matrix_dual_simplex[Find_row1,Find_col1];
                     }
                 }
             }
@@ -493,7 +530,7 @@ namespace SimplexMethodBMSTU
                     {
                         for(int j = 0; j<m; ++j)
                         {
-                            if(matrix[i,j] < 0)
+                            if(matrix_dual_simplex[i,j] < 0)
                             {
                                 IfHasntASolver = false;
                                 return 4; // Найден отрицательный элемент => разрешающий столбец, находим разрешающую строчку и продолжаем
@@ -525,47 +562,21 @@ namespace SimplexMethodBMSTU
         {
             if(TypeLP == "П")
             {
-                if(Func == "min")
+                for(int i = 1; i<n+1; ++i)
                 {
-                    for(int i = 1; i<n+1; ++i)
+                    if(F[i] > 0)
                     {
-                        if(F[i] > 0)
-                        {
-                            return --i;
-                        }
-                    }
-                }
-                else if(Func == "max")
-                {
-                    for(int i = 1; i<n+1; ++i)
-                    {
-                        if(F[i] < 0)
-                        {
-                            return --i;
-                        }
+                        return --i;
                     }
                 }
             }
             else if(TypeLP == "ДЗ")
             {
-                if(Func == "min")
+                for(int i = 0; i<m; ++i)
                 {
-                    for(int i = 1; i<m; ++i)
+                    if(F_dual_simplex[i] > 0)
                     {
-                        if(F_dual_simplex[i] < 0)
-                        {
-                            return --i;
-                        }
-                    }
-                }
-                else if(Func == "max")
-                {
-                    for(int i = 1; i<m; ++i)
-                    {
-                        if(F_dual_simplex[i] > 0)
-                        {
-                            return --i;
-                        }
+                        return i;
                     }
                 }
             }
@@ -583,17 +594,38 @@ namespace SimplexMethodBMSTU
                 return -1;
             }
             int g = -1;
-            for(int i = 0; i<m; ++i)
+            if(TypeLP == "П")
             {
-                if (matrix[i,b] != 0)
+                for(int i = 0; i<m; ++i)
                 {
-                    if(cols[i]/matrix[i,b] > 0)
+                    if (matrix[i,b] != 0)
                     {
-                        a = cols[i] / matrix[i,b];
-                        if(a<c)
+                        if(cols[i]/matrix[i,b] > 0)
                         {
-                            c = a;
-                            g = i;
+                            a = cols[i] / matrix[i,b];
+                            if(a<c)
+                            {
+                                c = a;
+                                g = i;
+                            }
+                        }
+                    }
+                }
+            }
+            else if(TypeLP == "ДЗ")
+            {
+                for(int i = 0; i<n; ++i)
+                {
+                    if (matrix_dual_simplex[i,b] != 0)
+                    {
+                        if(cols_dual_simplex[i]/matrix_dual_simplex[i,b] > 0)
+                        {
+                            a = cols_dual_simplex[i] / matrix_dual_simplex[i,b];
+                            if(a<c)
+                            {
+                                c = a;
+                                g = i;
+                            }
                         }
                     }
                 }
@@ -605,17 +637,35 @@ namespace SimplexMethodBMSTU
         // пока не будет получено опорное решение
         public void Refuel_mass()
         {
-            for(int i = 0; i<m; ++i)
+            if(TypeLP == "П")
             {
-                cols[i] = cols_new[i];
-                for(int j = 0; j<n; ++j)
+                for(int i = 0; i<m; ++i)
                 {
-                    matrix[i,j] = matrix_new[i,j];
+                    cols[i] = cols_new[i];
+                    for(int j = 0; j<n; ++j)
+                    {
+                        matrix[i,j] = matrix_new[i,j];
+                    }
+                }
+                for(int i = 0; i<n+1; ++i)
+                {
+                    F[i] = F_new[i];
                 }
             }
-            for(int i = 0; i<n+1; ++i)
+            else if(TypeLP == "ДЗ")
             {
-                F[i] = F_new[i];
+                for(int i = 0; i<n; ++i)
+                {
+                    for(int j = 0; j<m; ++j)
+                    {
+                        matrix_dual_simplex[i,j] = matrix_dual_simplex_new[i,j];
+                        F_dual_simplex[i] = F_dual_simplex_new[i];
+                    }
+                }
+                for(int i = 0; i<n+1; ++i)
+                {
+                    cols_dual_simplex[i] = cols_dual_simplex_new[i];
+                }
             }
         }
 
@@ -647,12 +697,40 @@ namespace SimplexMethodBMSTU
             Console.WriteLine();
         }
 
+        // Функция для перемешивания массива с функцией(max,min)
+        void ShakeMassiveWithFunction()
+        {
+            if(TypeLP == "ДЗ")
+            {
+                cols_dual_simplex[n+1] = -cols_dual_simplex[n+1];
+                for(int i = 0; i<m; ++i)
+                {
+                    F_dual_simplex[i] = -F_dual_simplex[i];
+                }
+            }
+            else if(TypeLP == "П")
+            {
+                for(int i = 0; i<n+1; ++i)
+                {
+                    F_new[i] = -F_new[i];
+                }
+            }
+        }
+
         // Главная функция, которая запускает весь процесс нахождения и оптимизации решения целевой функции
         void main_func_for_oprimization()
         {
             Input();
-            PrintAfterGeneralSolver();
+            MatrixTransposition();
             InputVariables();
+            if(TypeLP == "П")
+            {
+                PrintAfterGeneralSolver();
+            }
+            else if(TypeLP == "ДЗ")
+            {
+                PrintSimplexDualTab();
+            }
             int check_system = CheckSystem();
             if(check_system == 3)
             {
@@ -661,66 +739,82 @@ namespace SimplexMethodBMSTU
             }
             if(check_system == 5)
             {
-                if(TypeLP == "П")
+                if(Find_col_after_general_solver() == -1 || Find_row_after_general_solver() == -1)
                 {
-                    if(Find_col_after_general_solver() == -1 || Find_row_after_general_solver() == -1)
+                    Console.WriteLine("Система не имеет решений");
+                    Environment.Exit(0);
+                }
+                bool IsItTrue = true;
+                while(IsItTrue)
+                {
+                    IsItTrue = false;
+                    if(TypeLP == "П")
                     {
-                        Console.WriteLine("Система не имеет решений");
-                        Environment.Exit(0);
-                    }
-                    bool IsItTrue = true;
-                    while(IsItTrue)
-                    {
-                        IsItTrue = false;
-                        if(Func == "min")
+                        for(int i = 1; i<n+1; ++i)
                         {
-                            for(int i = 1; i<n+1; ++i)
+                            if(F[i] > 0)
                             {
-                                if(F[i] > 0)
-                                {
-                                    IsItTrue = true;
-                                    break;
-                                }
+                                IsItTrue = true;
+                                break;
                             }
                         }
-                        else if(Func == "max")
+                        
+                    }
+                    else if(TypeLP == "ДЗ")
+                    {
+                        for(int i = 1; i<n; ++i)
                         {
-                            for(int i = 1; i<n+1; ++i)
+                            if(F_dual_simplex[i] > 0)
                             {
-                                if(F[i] < 0)
-                                {
-                                    IsItTrue = true;
-                                    break;
-                                }
-                            } 
-                        }
-                        if(IsItTrue)
-                        {
-                            SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
-                            Refuel_mass();
-                            SwitchVariables(Find_row_after_general_solver,Find_col_after_general_solver);
-                            PrintSimplexTabWithVariables();
+                                IsItTrue = true;
+                                break;
+                            }
                         }
                     }
-                    // Находим оптимальное решение пока не будет в строке функции(кроме столбца свободных членов) всех отрицательных кэфов
-                }
-                else if(TypeLP == "ДЗ")
-                {
-                    
+                    if(IsItTrue)
+                    {
+                        Console.WriteLine(Find_col_after_general_solver() + "\t" + Find_row_after_general_solver());
+                        SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
+                        Refuel_mass();
+                        SwitchVariables(Find_row_after_general_solver,Find_col_after_general_solver);
+                        if(TypeLP == "П")
+                        {
+                            PrintSimplexTabWithVariables();
+                        }
+                        else if(TypeLP == "ДЗ")
+                        {
+                            PrintSimplexDualTab();
+                        }
+                    }
                 }
             }
+            // Находим оптимальное решение пока не будет в строке функции(кроме столбца свободных членов) всех отрицательных кэфов
             if(check_system == 4)
             {
                 bool IsItTrue = true;
                 while(IsItTrue)
                 {
                     IsItTrue = false;
-                    for(int i = 0; i<m; ++i)
+                    if(TypeLP == "П")
                     {
-                        if(cols[i] < 0)
+                        for(int i = 0; i<m; ++i)
                         {
-                            IsItTrue = true;
-                            break;
+                            if(cols[i] < 0)
+                            {
+                                IsItTrue = true;
+                                break;
+                            }
+                        }
+                    }
+                    else if(TypeLP == "ДЗ")
+                    {
+                        for(int i = 0; i<n; ++i)
+                        {
+                            if(cols_dual_simplex[i] < 0)
+                            {
+                                IsItTrue = true;
+                                break;
+                            }
                         }
                     }
                     if(IsItTrue)
@@ -728,7 +822,14 @@ namespace SimplexMethodBMSTU
                         SimplexTab(Find_row,Find_col);
                         Refuel_mass();
                         SwitchVariables(Find_row,Find_col);
-                        PrintSimplexTabWithVariables();
+                        if(TypeLP == "П")
+                        {
+                            PrintSimplexTabWithVariables();
+                        }
+                        else if(TypeLP == "ДЗ")
+                        {
+                            PrintSimplexDualTab();
+                        }
                     }
                 }
                 if(Find_col_after_general_solver() == -1 || Find_row_after_general_solver() == -1)
@@ -740,7 +841,7 @@ namespace SimplexMethodBMSTU
                 while(IsItTrue)
                 {
                     IsItTrue = false;
-                    if(Func == "min")
+                    if(TypeLP == "П")
                     {
                         for(int i = 1; i<n+1; ++i)
                         {
@@ -751,11 +852,11 @@ namespace SimplexMethodBMSTU
                             }
                         }
                     }
-                    else if(Func == "max")
+                    else if(TypeLP == "ДЗ")
                     {
                         for(int i = 1; i<n+1; ++i)
                         {
-                            if(F[i] < 0)
+                            if(F_dual_simplex[i] > 0)
                             {
                                 IsItTrue = true;
                                 break;
@@ -767,8 +868,39 @@ namespace SimplexMethodBMSTU
                         SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
                         Refuel_mass();
                         SwitchVariables(Find_row_after_general_solver,Find_col_after_general_solver);
-                        PrintSimplexTabWithVariables();
+                        if(TypeLP == "П")
+                        {
+                            PrintSimplexTabWithVariables();
+                        }
+                        else if(TypeLP == "ДЗ")
+                        {
+                            PrintSimplexDualTab();
+                        }
                     }
+                }
+            }
+            if(TypeLP == "П")
+            {
+                if(Func == "min")
+                {
+                    PrintSimplexTab();  
+                }
+                else if(Func == "max")
+                {
+                    ShakeMassiveWithFunction();
+                    PrintSimplexTab();
+                }
+            }
+            else if(TypeLP == "ДЗ")
+            {
+                if(Func == "min")
+                {
+                    ShakeMassiveWithFunction();
+                    PrintSimplexDualTabFinal(); 
+                }
+                else if(Func == "max")
+                {
+                    PrintSimplexDualTabFinal();
                 }
             }
         }
@@ -785,7 +917,6 @@ namespace SimplexMethodBMSTU
 
             var simplexMethod = new SimplexMethod(n, m);
             simplexMethod.main_func_for_oprimization();
-            simplexMethod.PrintSimplexTab();//
 
 
 
