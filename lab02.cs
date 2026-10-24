@@ -94,7 +94,7 @@ namespace SimplexMethodBMSTU
             }
         }
 
-        // Вывод получившейся симплекс таблицы
+        // Вывод получившейся симплекс таблицы итоговой
         public void PrintSimplexTab()
         {
             Console.WriteLine();
@@ -123,6 +123,7 @@ namespace SimplexMethodBMSTU
             Console.WriteLine($"\n\nF = {F[0]:F2}");
         }
 
+        // Функция для проверки задачи линейного программирования
         void InputVariables()
         {
             if(TypeLP == "П")
@@ -149,6 +150,7 @@ namespace SimplexMethodBMSTU
             }
         }
 
+        // Функция для замены переменной базисной на свободную и наоборот(подписи)
         void SwitchVariables(Func<int> find_row, Func<int> find_col)
         {
             int result_row = find_row();
@@ -162,6 +164,7 @@ namespace SimplexMethodBMSTU
             free_variables[result_col] = temp_row;
         }
 
+        // Функция печати таблицы в итерациях
         void PrintSimplexTabWithVariables()
         {
             Console.Write("\t" + "S_io" + "\t");
@@ -416,8 +419,8 @@ namespace SimplexMethodBMSTU
                         cols_dual_simplex_new[i] = cols_dual_simplex[i] - (matrix_dual_simplex[i,Find_col1]*cols_dual_simplex[Find_row1])/matrix_dual_simplex[Find_row1,Find_col1];
                     }
                 }
-                F_dual_simplex_new[Find_col1+1] = -F_dual_simplex[Find_col1+1]/matrix_dual_simplex[Find_row1,Find_col1];
-                F_dual_simplex_new[0] = F_dual_simplex[0] - ((F_dual_simplex[Find_col1+1]*cols_dual_simplex[Find_row1])/matrix_dual_simplex[Find_row1,Find_col1]);
+                F_dual_simplex_new[Find_col1] = -F_dual_simplex[Find_col1]/matrix_dual_simplex[Find_row1,Find_col1];
+                [0] = F_dual_simplex[0] - ((F_dual_simplex[Find_col1+1]*cols_dual_simplex[Find_row1])/matrix_dual_simplex[Find_row1,Find_col1]);
                 if(Find_col1 == m)
                 {
                     int variable = 0;
