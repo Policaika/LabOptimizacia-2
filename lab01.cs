@@ -26,8 +26,11 @@ namespace SimplexMethodBMSTU
         string[] basis_variables_dual = null!;
         string[] free_variables_dual = null!;
         decimal[,] matrix_dual_simplex = null!;
+        decimal[,] matrix_dual_simplex_new = null!;
         decimal[] cols_dual_simplex = null!;
         decimal[] F_dual_simplex = null!;
+        decimal[] F_dual_simplex_new = null!;
+        decimal[] cols_dual_simplex_new = null!;
         decimal[,] matrix_new = null!; // массив с кэфами после преобразования
         public SimplexMethod(int n, int m)
         {
@@ -47,9 +50,12 @@ namespace SimplexMethodBMSTU
             free_variables = new string[n];
             basis_variables_dual = new string[n+1];
             free_variables_dual = new string[m];
-            matrix_dual_simplex = new decimal[n+1,m];
+            matrix_dual_simplex = new decimal[n,m];
             cols_dual_simplex = new decimal[n+1];
             F_dual_simplex = new decimal[m];
+            matrix_dual_simplex_new = new decimal[n,m];
+            F_dual_simplex_new = new decimal[m];
+            cols_dual_simplex_new = new decimal[n];
         }
         public void Input()
         {
@@ -182,30 +188,68 @@ namespace SimplexMethodBMSTU
             Console.WriteLine();
         }
 
+        // Транспонирование матрицы
         void MatrixTransposition()
         {
+            for(int i = 0; i<m; ++i)
+            {
+                F_dual_simplex[i] = cols[i];
+            }
             for(int i = 0; i<n+1; ++i)
             {
-                
+                cols_dual_simplex[i] = F[i];
+            }
+            for(int i = 0; i<n; ++i)
+            {
+                for(int j = 0; j<m; ++j)
+                {
+                    matrix_dual_simplex[i,j] = matrix[j,i];
+                }
             }
         }
 
+        // Вывод ДЗЛП
+        // void PrintDualSimplexMethod
+        // {
+        //     // ....
+        // }
+
         // Поиск разщешающего столбца
         int Find_col()
-        {
-            for(int j = 0; j<m; ++j)
+        {   
+            if(TypeLP == "П")
             {
-                if(cols[j] < 0)
+                for(int j = 0; j<m; ++j)
                 {
-                    for (int i = 0; i < n; i++)
+                    if(cols[j] < 0)
                     {
-                        if (matrix[j, i] < 0)
+                        for (int i = 0; i < n; i++)
                         {
-                            return i;
-                        }
-                    } 
-                }
+                            if (matrix[j, i] < 0)
+                            {
+                                return i;
+                            }
+                        } 
+                    }
 
+                }
+            }
+            else if(TypeLP == "ДЗ")
+            {
+                for(int j = 0; j<n; ++j)
+                {
+                    if(cols_dual_simplex[j] < 0)
+                    {
+                        for (int i = 0; i < m; i++)
+                        {
+                            if (matrix_dual_simplex[j,i] < 0)
+                            {
+                                return i;
+                            }
+                        } 
+                    }
+
+                }
             }
             return -1;
         }
@@ -221,21 +265,43 @@ namespace SimplexMethodBMSTU
             {
                 return -1;
             }
-            for(int i = 0; i<m; ++i)
+            if(TypeLP == "П")
             {
-                if(matrix[i,col_find] != 0)
+                for(int i = 0; i<m; ++i)
                 {
-                    if(cols[i]/matrix[i,col_find] > 0)
+                    if(matrix[i,col_find] != 0)
                     {
-                        a = cols[i]/matrix[i,col_find];
-                        if(a < b)
+                        if(cols[i]/matrix[i,col_find] > 0)
                         {
-                            b = a;
-                            c = i;
-                        }
-                    }  
-                }
+                            a = cols[i]/matrix[i,col_find];
+                            if(a < b)
+                            {
+                                b = a;
+                                c = i;
+                            }
+                        }  
+                    }
 
+                }  
+            }
+            else if(TypeLP == "ДЗ")
+            {
+                for(int i = 0; i<n; ++i)
+                {
+                    if(matrix_dual_simplex[i,col_find] != 0)
+                    {
+                        if(cols_dual_simplex[i]/matrix_dual_simplex[i,col_find] > 0)
+                        {
+                            a = cols_dual_simplex[i]/matrix_dual_simplex[i,col_find];
+                            if(a < b)
+                            {
+                                b = a;
+                                c = i;
+                            }
+                        }  
+                    }
+
+                }
             }
             return c;
         }
@@ -243,67 +309,137 @@ namespace SimplexMethodBMSTU
         // Преобразование симплекс-таблицы
         void SimplexTab(Func<int> Find_rowfunc, Func<int> Find_colfunc) 
         {
-            int Find_row1 = Find_rowfunc();
-            int Find_col1 = Find_colfunc();
-            matrix_new[Find_row1,Find_col1] = 1/matrix[Find_row1,Find_col1];
-            for(int i = 0; i<n; ++i)
+            if(TypeLP == "П")
             {
-                if(i != Find_col1)
+                int Find_row1 = Find_rowfunc();
+                int Find_col1 = Find_colfunc();
+                matrix_new[Find_row1,Find_col1] = 1/matrix[Find_row1,Find_col1];
+                for(int i = 0; i<n; ++i)
                 {
-                    matrix_new[Find_row1,i] = matrix[Find_row1,i]/matrix[Find_row1,Find_col1];
-                }
-            }
-            for(int i = 0; i<m; ++i)
-            {
-                if(i != Find_row1)
-                {
-                    matrix_new[i,Find_col1] = -matrix[i,Find_col1]/matrix[Find_row1,Find_col1];
-                }
-            }
-            for(int i = 0; i<m; ++i)
-            {
-                if(i != Find_row1)
-                {
-                    for(int j = 0; j<n; ++j)
+                    if(i != Find_col1)
                     {
-                        if(j != Find_col1)
+                        matrix_new[Find_row1,i] = matrix[Find_row1,i]/matrix[Find_row1,Find_col1];
+                    }
+                }
+                for(int i = 0; i<m; ++i)
+                {
+                    if(i != Find_row1)
+                    {
+                        matrix_new[i,Find_col1] = -matrix[i,Find_col1]/matrix[Find_row1,Find_col1];
+                    }
+                }
+                for(int i = 0; i<m; ++i)
+                {
+                    if(i != Find_row1)
+                    {
+                        for(int j = 0; j<n; ++j)
                         {
-                            matrix_new[i,j] = matrix[i,j] - (matrix[Find_row1,j]*matrix[i,Find_col1])/matrix[Find_row1,Find_col1];
+                            if(j != Find_col1)
+                            {
+                                matrix_new[i,j] = matrix[i,j] - (matrix[Find_row1,j]*matrix[i,Find_col1])/matrix[Find_row1,Find_col1];
+                            }
                         }
                     }
                 }
-            }
-            cols_new[Find_row1] = cols[Find_row1]/matrix[Find_row1,Find_col1];
-            for(int i = 0; i<m; ++i)
-            {
-                if(i != Find_row1)
+                cols_new[Find_row1] = cols[Find_row1]/matrix[Find_row1,Find_col1];
+                for(int i = 0; i<m; ++i)
                 {
-                    cols_new[i] = cols[i] - (matrix[i,Find_col1]*cols[Find_row1])/matrix[Find_row1,Find_col1];
-                }
-            }
-            F_new[Find_col1+1] = -F[Find_col1+1]/matrix[Find_row1,Find_col1];
-            F_new[0] = F[0] - ((F[Find_col1+1]*cols[Find_row1])/matrix[Find_row1,Find_col1]);
-            if(Find_col1 == n - 1)
-            {
-                int variable = 0;
-                for(int i = 1; i<n+1; ++i)
-                {
-                    if(i != Find_col1+1)
+                    if(i != Find_row1)
                     {
-                        F_new[i] = F[i] - (F[Find_col1+1]*matrix[Find_row1,variable])/matrix[Find_row1,Find_col1];
-                        ++variable;
+                        cols_new[i] = cols[i] - (matrix[i,Find_col1]*cols[Find_row1])/matrix[Find_row1,Find_col1];
                     }
                 }
-            }
-            else
-            {
-                int variable = 1;
-                for(int i = 1; i<n+1; ++i)
+                F_new[Find_col1+1] = -F[Find_col1+1]/matrix[Find_row1,Find_col1];
+                F_new[0] = F[0] - ((F[Find_col1+1]*cols[Find_row1])/matrix[Find_row1,Find_col1]);
+                if(Find_col1 == n - 1)
                 {
-                    if(i != Find_col1+1)
+                    int variable = 0;
+                    for(int i = 1; i<n+1; ++i)
                     {
-                        F_new[i] = F[i] - (F[Find_col1+1]*matrix[Find_row1,variable])/matrix[Find_row1,Find_col1];
-                        ++variable;
+                        if(i != Find_col1+1)
+                        {
+                            F_new[i] = F[i] - (F[Find_col1+1]*matrix[Find_row1,variable])/matrix[Find_row1,Find_col1];
+                            ++variable;
+                        }
+                    }
+                }
+                else
+                {
+                    int variable = 1;
+                    for(int i = 1; i<n+1; ++i)
+                    {
+                        if(i != Find_col1+1)
+                        {
+                            F_new[i] = F[i] - (F[Find_col1+1]*matrix[Find_row1,variable])/matrix[Find_row1,Find_col1];
+                            ++variable;
+                        }
+                    }
+                }   
+            }
+            else if(TypeLP == "ДЗ")
+            {
+                int Find_row1 = Find_rowfunc();
+                int Find_col1 = Find_colfunc();
+                matrix_dual_simplex_new[Find_row1,Find_col1] = 1/matrix_dual_simplex[Find_row1,Find_col1];
+                for(int i = 0; i<m; ++i)
+                {
+                    if(i != Find_col1)
+                    {
+                        matrix_dual_simplex_new[Find_row1,i] = matrix_dual_simplex[Find_row1,i]/matrix_dual_simplex[Find_row1,Find_col1];
+                    }
+                }
+                for(int i = 0; i<n; ++i)
+                {
+                    if(i != Find_row1)
+                    {
+                        matrix_dual_simplex_new[i,Find_col1] = -matrix_dual_simplex[i,Find_col1]/matrix_dual_simplex[Find_row1,Find_col1];
+                    }
+                }
+                for(int i = 0; i<n; ++i)
+                {
+                    if(i != Find_row1)
+                    {
+                        for(int j = 0; j<m; ++j)
+                        {
+                            if(j != Find_col1)
+                            {
+                                matrix_dual_simplex_new[i,j] = matrix_dual_simplex[i,j] - (matrix_dual_simplex[Find_row1,j]*matrix_dual_simplex[i,Find_col1])/matrix_dual_simplex[Find_row1,Find_col1];
+                            }
+                        }
+                    }
+                }
+                cols_dual_simplex_new[Find_row1] = cols_dual_simplex[Find_row1]/matrix_dual_simplex[Find_row1,Find_col1];
+                for(int i = 0; i<n; ++i)
+                {
+                    if(i != Find_row1)
+                    {
+                        cols_dual_simplex_new[i] = cols_dual_simplex[i] - (matrix_dual_simplex[i,Find_col1]*cols_dual_simplex[Find_row1])/matrix_dual_simplex[Find_row1,Find_col1];
+                    }
+                }
+                F_dual_simplex_new[Find_col1+1] = -F_dual_simplex[Find_col1+1]/matrix_dual_simplex[Find_row1,Find_col1];
+                F_dual_simplex_new[0] = F_dual_simplex[0] - ((F_dual_simplex[Find_col1+1]*cols_dual_simplex[Find_row1])/matrix_dual_simplex[Find_row1,Find_col1]);
+                if(Find_col1 == m)
+                {
+                    int variable = 0;
+                    for(int i = 1; i<m; ++i)
+                    {
+                        if(i != Find_col1+1)
+                        {
+                            F_dual_simplex_new[i] = F_dual_simplex[i] - (F_dual_simplex[Find_col1+1]*matrix_dual_simplex[Find_row1,variable])/matrix_dual_simplex[Find_row1,Find_col1];
+                            ++variable;
+                        }
+                    }
+                }
+                else
+                {
+                    int variable = 1;
+                    for(int i = 1; i<m; ++i)
+                    {
+                        if(i != Find_col1+1)
+                        {
+                            F_dual_simplex_new[i] = F_dual_simplex[i] - (F_dual_simplex[Find_col1+1]*matrix_dual_simplex[Find_row1,variable])/matrix_dual_simplex[Find_row1,Find_col1];
+                            ++variable;
+                        }
                     }
                 }
             }
@@ -312,36 +448,73 @@ namespace SimplexMethodBMSTU
         // Функция для проверки наличия решения
         int CheckSystem()
         {
-            int CountVariable = 0;
-            bool IfHasntASolver = true;
-            for(int i = 0; i<m; ++i)
+            if(TypeLP == "П")
             {
-                if(cols[i] < 0)
+                int CountVariable = 0;
+                bool IfHasntASolver = true;
+                for(int i = 0; i<m; ++i)
                 {
-                    for(int j = 0; j<n; ++j)
+                    if(cols[i] < 0)
                     {
-                        if(matrix[i,j] < 0)
+                        for(int j = 0; j<n; ++j)
                         {
-                            IfHasntASolver = false;
-                            return 4; // Найден отрицательный элемент => разрешающий столбец, находим разрешающую строчку и продолжаем
-                            //симплекс-метод
+                            if(matrix[i,j] < 0)
+                            {
+                                IfHasntASolver = false;
+                                return 4; // Найден отрицательный элемент => разрешающий столбец, находим разрешающую строчку и продолжаем
+                                //симплекс-метод
+                            }
                         }
                     }
+                    else
+                    {
+                    ++CountVariable; 
+                    }
                 }
-                else
+                if(CountVariable == m)
                 {
-                   ++CountVariable; 
+                    IfHasntASolver = false;
+                    return 5; // Опорное решение только, если все свободные кэфы >= 0
+                // Опорное решение найдено, продолжаем симплекс-метод
+                }
+                if(IfHasntASolver)
+                {
+                    return 3; // В строке S нет отрицательных элементов => система не имеет решений
                 }
             }
-            if(CountVariable == m)
+            else if(TypeLP == "ДЗ")
             {
-                IfHasntASolver = false;
-                return 5; // Опорное решение только, если все свободные кэфы >= 0
-            // Опорное решение найдено, продолжаем симплекс-метод
-            }
-            if(IfHasntASolver)
-            {
-                return 3; // В строке S нет отрицательных элементов => система не имеет решений
+                int CountVariable = 0;
+                bool IfHasntASolver = true;
+                for(int i = 0; i<n; ++i)
+                {
+                    if(cols_dual_simplex[i] < 0)
+                    {
+                        for(int j = 0; j<m; ++j)
+                        {
+                            if(matrix[i,j] < 0)
+                            {
+                                IfHasntASolver = false;
+                                return 4; // Найден отрицательный элемент => разрешающий столбец, находим разрешающую строчку и продолжаем
+                                //симплекс-метод
+                            }
+                        }
+                    }
+                    else
+                    {
+                    ++CountVariable; 
+                    }
+                }
+                if(CountVariable == n)
+                {
+                    IfHasntASolver = false;
+                    return 5; // Опорное решение только, если все свободные кэфы >= 0
+                // Опорное решение найдено, продолжаем симплекс-метод
+                }
+                if(IfHasntASolver)
+                {
+                    return 3; // В строке S нет отрицательных элементов => система не имеет решений
+                }
             }
             return -1;
         }
@@ -349,23 +522,49 @@ namespace SimplexMethodBMSTU
         // Функция для поиска нового разрешающего столбца
         int Find_col_after_general_solver()
         {
-            if(Func == "min")
+            if(TypeLP == "П")
             {
-                for(int i = 1; i<n+1; ++i)
+                if(Func == "min")
                 {
-                    if(F[i] > 0)
+                    for(int i = 1; i<n+1; ++i)
                     {
-                        return --i;
+                        if(F[i] > 0)
+                        {
+                            return --i;
+                        }
+                    }
+                }
+                else if(Func == "max")
+                {
+                    for(int i = 1; i<n+1; ++i)
+                    {
+                        if(F[i] < 0)
+                        {
+                            return --i;
+                        }
                     }
                 }
             }
-            else if(Func == "max")
+            else if(TypeLP == "ДЗ")
             {
-                for(int i = 1; i<n+1; ++i)
+                if(Func == "min")
                 {
-                    if(F[i] < 0)
+                    for(int i = 1; i<m; ++i)
                     {
-                        return --i;
+                        if(F_dual_simplex[i] < 0)
+                        {
+                            return --i;
+                        }
+                    }
+                }
+                else if(Func == "max")
+                {
+                    for(int i = 1; i<m; ++i)
+                    {
+                        if(F_dual_simplex[i] > 0)
+                        {
+                            return --i;
+                        }
                     }
                 }
             }
@@ -461,46 +660,53 @@ namespace SimplexMethodBMSTU
             }
             if(check_system == 5)
             {
-                if(Find_col_after_general_solver() == -1 || Find_row_after_general_solver() == -1)
+                if(TypeLP == "П")
                 {
-                    Console.WriteLine("Система не имеет решений");
-                    Environment.Exit(0);
-                }
-                bool IsItTrue = true;
-                while(IsItTrue)
-                {
-                    IsItTrue = false;
-                    if(Func == "min")
+                    if(Find_col_after_general_solver() == -1 || Find_row_after_general_solver() == -1)
                     {
-                        for(int i = 1; i<n+1; ++i)
+                        Console.WriteLine("Система не имеет решений");
+                        Environment.Exit(0);
+                    }
+                    bool IsItTrue = true;
+                    while(IsItTrue)
+                    {
+                        IsItTrue = false;
+                        if(Func == "min")
                         {
-                            if(F[i] > 0)
+                            for(int i = 1; i<n+1; ++i)
                             {
-                                IsItTrue = true;
-                                break;
+                                if(F[i] > 0)
+                                {
+                                    IsItTrue = true;
+                                    break;
+                                }
                             }
                         }
-                    }
-                    else if(Func == "max")
-                    {
-                        for(int i = 1; i<n+1; ++i)
+                        else if(Func == "max")
                         {
-                            if(F[i] < 0)
+                            for(int i = 1; i<n+1; ++i)
                             {
-                                IsItTrue = true;
-                                break;
-                            }
-                        } 
+                                if(F[i] < 0)
+                                {
+                                    IsItTrue = true;
+                                    break;
+                                }
+                            } 
+                        }
+                        if(IsItTrue)
+                        {
+                            SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
+                            Refuel_mass();
+                            SwitchVariables(Find_row_after_general_solver,Find_col_after_general_solver);
+                            PrintSimplexTabWithVariables();
+                        }
                     }
-                    if(IsItTrue)
-                    {
-                        SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
-                        Refuel_mass();
-                        SwitchVariables(Find_row_after_general_solver,Find_col_after_general_solver);
-                        PrintSimplexTabWithVariables();
-                    }
+                    // Находим оптимальное решение пока не будет в строке функции(кроме столбца свободных членов) всех отрицательных кэфов
                 }
-                // Находим оптимальное решение пока не будет в строке функции(кроме столбца свободных членов) всех отрицательных кэфов
+                else if(TypeLP == "ДЗ")
+                {
+                    
+                }
             }
             if(check_system == 4)
             {
