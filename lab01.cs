@@ -784,7 +784,7 @@ namespace SimplexMethodBMSTU
 
             var simplexMethod = new SimplexMethod(n, m);
             simplexMethod.main_func_for_oprimization();
-            simplexMethod.PrintSimplexTab();
+            simplexMethod.PrintSimplexTab();//
 
 
 
