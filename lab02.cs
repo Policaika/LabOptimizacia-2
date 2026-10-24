@@ -772,7 +772,6 @@ namespace SimplexMethodBMSTU
                     }
                     if(IsItTrue)
                     {
-                        Console.WriteLine(Find_col_after_general_solver() + "\t" + Find_row_after_general_solver());
                         SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
                         Refuel_mass();
                         SwitchVariables(Find_row_after_general_solver,Find_col_after_general_solver);
@@ -853,7 +852,7 @@ namespace SimplexMethodBMSTU
                     }
                     else if(TypeLP == "ДЗ")
                     {
-                        for(int i = 1; i<n+1; ++i)
+                        for(int i = 1; i<n; ++i)
                         {
                             if(F_dual_simplex[i] > 0)
                             {
