@@ -98,17 +98,17 @@ namespace SimplexMethodBMSTU
             for(int i = 0; i<m; ++i)
             {
                 Console.Write(basis_variables[i] + "\t");
-                Console.Write($"{cols_new[i]:F2}" + "\t");
+                Console.Write($"{cols[i]:F2}" + "\t");
                 for(int j = 0; j<n; ++j)
                 {
-                   Console.Write($"{matrix_new[i,j]:F2}" + "\t");
+                   Console.Write($"{matrix[i,j]:F2}" + "\t");
                 }
                 Console.WriteLine("");
             }
             Console.Write("F" + "\t");
             for(int i = 0; i<n+1; ++i)
             {
-                Console.Write($"{F_new[i]}" + "\t");
+                Console.Write($"{F[i]:F2}" + "\t");
             }
             Console.WriteLine($"\n\nF = {F[0]:F2}");
         }
@@ -158,11 +158,11 @@ namespace SimplexMethodBMSTU
             }
             else if(TypeLP == "ДЗ")
             {
-                for(int i = 0; i<n; ++i)
+                for(int i = 0; i<m; ++i)
                 {
                     free_variables_dual[i] = $"y{i+1}";
                 }
-                for(int i = 0; i<m; ++i)
+                for(int i = 0; i<n+1; ++i)
                 {
                     basis_variables_dual[i] = $"y{n+i+1}";
                 }
@@ -231,14 +231,14 @@ namespace SimplexMethodBMSTU
             for(int i = 0; i<n; ++i)
             {
                 Console.Write(basis_variables_dual[i] + "\t");
-                Console.Write(cols_dual_simplex[i] + "\t");
+                Console.Write($"{cols_dual_simplex[i]:F2}" + "\t");
                 for(int j = 0; j<m; ++j)
                 {
                     Console.Write($"{matrix_dual_simplex[i,j]:F2}" + "\t");
                 }
                 Console.WriteLine();
             }
-            Console.Write("F" + "\t" + cols_dual_simplex[n] + "\t");
+            Console.Write("F" + "\t" + $"{cols_dual_simplex[n]:F2}" + "\t");
             for(int i = 0; i < m; ++i)
             {
                 Console.Write($"{F_dual_simplex[i]:F2}" + "\t");
@@ -254,10 +254,11 @@ namespace SimplexMethodBMSTU
             {
                 F_dual_simplex[i] = cols[i];
             }
-            for(int i = 0; i<n+1; ++i)
+            for(int i = 0; i<n; ++i)
             {
                 cols_dual_simplex[i] = F[i];
             }
+            cols_dual_simplex[n] = F[n];
             for(int i = 0; i<n; ++i)
             {
                 for(int j = 0; j<m; ++j)
@@ -658,8 +659,11 @@ namespace SimplexMethodBMSTU
                     for(int j = 0; j<m; ++j)
                     {
                         matrix_dual_simplex[i,j] = matrix_dual_simplex_new[i,j];
-                        F_dual_simplex[i] = F_dual_simplex_new[i];
                     }
+                }
+                for(int i = 0; i<m; ++i)
+                {
+                    F_dual_simplex[i] = F_dual_simplex_new[i];
                 }
                 for(int i = 0; i<n+1; ++i)
                 {
