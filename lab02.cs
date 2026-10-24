@@ -420,29 +420,12 @@ namespace SimplexMethodBMSTU
                     }
                 }
                 F_dual_simplex_new[Find_col1] = -F_dual_simplex[Find_col1]/matrix_dual_simplex[Find_row1,Find_col1];
-                [0] = F_dual_simplex[0] - ((F_dual_simplex[Find_col1+1]*cols_dual_simplex[Find_row1])/matrix_dual_simplex[Find_row1,Find_col1]);
-                if(Find_col1 == m)
+                cols_dual_simplex_new[n+1] = cols_dual_simplex[n+1] - ((F_dual_simplex[Find_col1]*cols_dual_simplex[Find_row1])/matrix_dual_simplex[Find_row1,Find_col1]);
+                for(int i = 1; i<m; ++i)
                 {
-                    int variable = 0;
-                    for(int i = 1; i<m; ++i)
+                    if(i != Find_col1)
                     {
-                        if(i != Find_col1+1)
-                        {
-                            F_dual_simplex_new[i] = F_dual_simplex[i] - (F_dual_simplex[Find_col1+1]*matrix_dual_simplex[Find_row1,variable])/matrix_dual_simplex[Find_row1,Find_col1];
-                            ++variable;
-                        }
-                    }
-                }
-                else
-                {
-                    int variable = 1;
-                    for(int i = 1; i<m; ++i)
-                    {
-                        if(i != Find_col1+1)
-                        {
-                            F_dual_simplex_new[i] = F_dual_simplex[i] - (F_dual_simplex[Find_col1+1]*matrix_dual_simplex[Find_row1,variable])/matrix_dual_simplex[Find_row1,Find_col1];
-                            ++variable;
-                        }
+                        F_dual_simplex_new[i] = F_dual_simplex[i] - (F_dual_simplex[Find_col1]*matrix_dual_simplex[Find_row1,variable])/matrix_dual_simplex[Find_row1,Find_col1];
                     }
                 }
             }
@@ -556,7 +539,7 @@ namespace SimplexMethodBMSTU
                     {
                         if(F_dual_simplex[i] < 0)
                         {
-                            return --i;
+                            return i;
                         }
                     }
                 }
@@ -566,7 +549,7 @@ namespace SimplexMethodBMSTU
                     {
                         if(F_dual_simplex[i] > 0)
                         {
-                            return --i;
+                            return i;
                         }
                     }
                 }
@@ -585,17 +568,38 @@ namespace SimplexMethodBMSTU
                 return -1;
             }
             int g = -1;
-            for(int i = 0; i<m; ++i)
+            if(TypeLP == "П")
             {
-                if (matrix[i,b] != 0)
+                for(int i = 0; i<m; ++i)
                 {
-                    if(cols[i]/matrix[i,b] > 0)
+                    if (matrix[i,b] != 0)
                     {
-                        a = cols[i] / matrix[i,b];
-                        if(a<c)
+                        if(cols[i]/matrix[i,b] > 0)
                         {
-                            c = a;
-                            g = i;
+                            a = cols[i] / matrix[i,b];
+                            if(a<c)
+                            {
+                                c = a;
+                                g = i;
+                            }
+                        }
+                    }
+                }
+            }
+            else if(TypeLP == "ДЗ")
+            {
+                for(int i = 0; i<m; ++i)
+                {
+                    if (matrix_dual_simplex[i,b] != 0)
+                    {
+                        if(cols_dual_simplex[i]/matrix_dual_simplex[i,b] > 0)
+                        {
+                            a = cols_dual_simplex[i] / matrix_dual_simplex[i,b];
+                            if(a<c)
+                            {
+                                c = a;
+                                g = i;
+                            }
                         }
                     }
                 }
@@ -607,17 +611,35 @@ namespace SimplexMethodBMSTU
         // пока не будет получено опорное решение
         public void Refuel_mass()
         {
-            for(int i = 0; i<m; ++i)
+            if(TypeLP == "П")
             {
-                cols[i] = cols_new[i];
-                for(int j = 0; j<n; ++j)
+                for(int i = 0; i<m; ++i)
                 {
-                    matrix[i,j] = matrix_new[i,j];
+                    cols[i] = cols_new[i];
+                    for(int j = 0; j<n; ++j)
+                    {
+                        matrix[i,j] = matrix_new[i,j];
+                    }
+                }
+                for(int i = 0; i<n+1; ++i)
+                {
+                    F[i] = F_new[i];
                 }
             }
-            for(int i = 0; i<n+1; ++i)
+            else if(TypeLP == "ДЗ")
             {
-                F[i] = F_new[i];
+                for(int i = 0; i<n; ++i)
+                {
+                    for(int j = 0; j<m; ++j)
+                    {
+                        matrix_dual_simplex_new[i,j] = matrix_dual_simplex[i,j];
+                        F_dual_simplex_new[i] = F_dual_simplex[i];
+                    }
+                }
+                for(int i = 0; i<n+1; ++i)
+                {
+                    cols_dual_simplex_new[i] = cols_dual_simplex[i];
+                }
             }
         }
 
@@ -663,8 +685,6 @@ namespace SimplexMethodBMSTU
             }
             if(check_system == 5)
             {
-                if(TypeLP == "П")
-                {
                     if(Find_col_after_general_solver() == -1 || Find_row_after_general_solver() == -1)
                     {
                         Console.WriteLine("Система не имеет решений");
@@ -674,27 +694,55 @@ namespace SimplexMethodBMSTU
                     while(IsItTrue)
                     {
                         IsItTrue = false;
-                        if(Func == "min")
+                        if(TypeLP == "П")
                         {
-                            for(int i = 1; i<n+1; ++i)
+                            if(Func == "min")
                             {
-                                if(F[i] > 0)
+                                for(int i = 1; i<n+1; ++i)
                                 {
-                                    IsItTrue = true;
-                                    break;
+                                    if(F[i] > 0)
+                                    {
+                                        IsItTrue = true;
+                                        break;
+                                    }
                                 }
                             }
-                        }
-                        else if(Func == "max")
-                        {
-                            for(int i = 1; i<n+1; ++i)
+                            else if(Func == "max")
                             {
-                                if(F[i] < 0)
+                                for(int i = 1; i<n+1; ++i)
                                 {
-                                    IsItTrue = true;
-                                    break;
+                                    if(F[i] < 0)
+                                    {
+                                        IsItTrue = true;
+                                        break;
+                                    }
+                                } 
+                            }
+                        }
+                        else if(TypeLP == "ДЗ")
+                        {
+                            if(Func == "min")
+                            {
+                                for(int i = 1; i<n+1; ++i)
+                                {
+                                    if(F_dual_simplex[i] > 0)
+                                    {
+                                        IsItTrue = true;
+                                        break;
+                                    }
                                 }
-                            } 
+                            }
+                            else if(Func == "max")
+                            {
+                                for(int i = 1; i<n+1; ++i)
+                                {
+                                    if(F_dual_simplex[i] < 0)
+                                    {
+                                        IsItTrue = true;
+                                        break;
+                                    }
+                                } 
+                            }
                         }
                         if(IsItTrue)
                         {
@@ -706,11 +754,6 @@ namespace SimplexMethodBMSTU
                     }
                     // Находим оптимальное решение пока не будет в строке функции(кроме столбца свободных членов) всех отрицательных кэфов
                 }
-                else if(TypeLP == "ДЗ")
-                {
-                    
-                }
-            }
             if(check_system == 4)
             {
                 bool IsItTrue = true;
