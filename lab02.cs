@@ -705,7 +705,7 @@ namespace SimplexMethodBMSTU
         {
             if(TypeLP == "DZ")
             {
-                cols_dual_simplex[n+1] = -cols_dual_simplex[n+1];
+                cols_dual_simplex[n] = -cols_dual_simplex[n];
                 for(int i = 0; i<m; ++i)
                 {
                     F_dual_simplex[i] = -F_dual_simplex[i];
@@ -720,7 +720,7 @@ namespace SimplexMethodBMSTU
             }
         }
 
-        // Главная функция, которая запускает весь процесс нахождения и оптимизации решения целевой функции
+        // Главная функция, которая запускает весь процесс нахождения опорного решения и оптимизации целевой функции
         void main_func_for_oprimization()
         {
             Input();
@@ -776,9 +776,9 @@ namespace SimplexMethodBMSTU
                     }
                     if(IsItTrue)
                     {
+                        SwitchVariables(Find_row_after_general_solver,Find_col_after_general_solver);
                         SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
                         Refuel_mass();
-                        SwitchVariables(Find_row_after_general_solver,Find_col_after_general_solver);
                         if(TypeLP == "P")
                         {
                             PrintSimplexTabWithVariables();
@@ -821,9 +821,9 @@ namespace SimplexMethodBMSTU
                     }
                     if(IsItTrue)
                     {
+                        SwitchVariables(Find_row,Find_col);
                         SimplexTab(Find_row,Find_col);
                         Refuel_mass();
-                        SwitchVariables(Find_row,Find_col);
                         if(TypeLP == "P")
                         {
                             PrintSimplexTabWithVariables();
@@ -867,9 +867,9 @@ namespace SimplexMethodBMSTU
                     }
                     if(IsItTrue)
                     {
+                        SwitchVariables(Find_row_after_general_solver,Find_col_after_general_solver);
                         SimplexTab(Find_row_after_general_solver,Find_col_after_general_solver);
                         Refuel_mass();
-                        SwitchVariables(Find_row_after_general_solver,Find_col_after_general_solver);
                         if(TypeLP == "P")
                         {
                             PrintSimplexTabWithVariables();
@@ -897,12 +897,12 @@ namespace SimplexMethodBMSTU
             {
                 if(Func == "min")
                 {
-                    ShakeMassiveWithFunction();
-                    PrintSimplexDualTabFinal(); 
+                    PrintSimplexDualTabFinal();  
                 }
                 else if(Func == "max")
                 {
-                    PrintSimplexDualTabFinal();
+                    ShakeMassiveWithFunction();
+                    PrintSimplexDualTabFinal();  
                 }
             }
         }
