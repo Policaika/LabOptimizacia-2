@@ -600,7 +600,7 @@ namespace SimplexMethodBMSTU
                 {
                     if (matrix[i,b] != 0)
                     {
-                        if(cols[i]/matrix[i,b] > 0)
+                        if(cols[i]/matrix[i,b] >= 0)
                         {
                             a = cols[i] / matrix[i,b];
                             if(a<c)
@@ -618,7 +618,7 @@ namespace SimplexMethodBMSTU
                 {
                     if (matrix_dual_simplex[i,b] != 0)
                     {
-                        if(cols_dual_simplex[i]/matrix_dual_simplex[i,b] > 0)
+                        if(cols_dual_simplex[i]/matrix_dual_simplex[i,b] >= 0)
                         {
                             a = cols_dual_simplex[i] / matrix_dual_simplex[i,b];
                             if(a<c)
